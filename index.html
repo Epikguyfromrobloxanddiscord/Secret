@@ -1,0 +1,146 @@
+ 
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure Script Editor</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: radial-gradient(circle at top left, #1a1a2e, #16213e);
+      font-family: 'Verdana', sans-serif;
+      color: #fff;
+      font-size: 0;
+    }
+    .panel {
+      font-size: 16px;
+      background: #0f0f1f;
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2), inset 0 0 10px rgba(0,255,255,0.1);
+      width: 70%;
+      text-align: center;
+      margin: 100px auto;
+    }
+    input[type="password"] {
+      font-size: 16px;
+      padding: 12px;
+      width: 80%;
+      border: none;
+      border-radius: 8px;
+      background: #1f1f3d;
+      color: #00fff7;
+      margin-bottom: 20px;
+      box-shadow: inset 0 0 5px rgba(0,255,247,0.4);
+    }
+    button {
+      font-size: 16px;
+      padding: 12px 25px;
+      background: linear-gradient(135deg, #00fff7, #007cf0);
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 255, 247, 0.4);
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    #editor-container {
+      display: none;
+      height: 100vh;
+      width: 100%;
+      box-sizing: border-box;
+      padding-top: 50px;
+    }
+    #content {
+      font-size: 14px;
+      width: 100%;
+      height: calc(100vh - 50px);
+      padding: 20px;
+      background: #0f0f1f;
+      color: #00fff7;
+      white-space: pre-wrap;
+      overflow: auto;
+      outline: none;
+    }
+    .save-btn {
+      font-size: 16px;
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: #007cf0;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+ 
+<div class="panel" id="panel">
+  <h2>Secure Access</h2>
+  <input type="password" id="passwordInput" placeholder="Enter password">
+  <br>
+  <button onclick="checkPassword()">Access</button>
+</div>
+ 
+<div id="editor-container">
+  <button class="save-btn" onclick="saveScript()">Save</button>
+  <div id="content" contenteditable="true"></div>
+</div>
+ 
+<script>
+  const name = '1fbee07372c1e42069406bbea9474791';
+ 
+  function checkPassword() {
+    const password = document.getElementById('passwordInput').value;
+    fetch('/' + name + '?key=' + encodeURIComponent(password))
+      .then(response => {
+        if (response.ok) {
+          return response.text();
+        } else {
+          throw new Error('Incorrect password');
+        }
+      })
+      .then(scriptContent => {
+        document.getElementById('panel').style.display = 'none';
+        document.getElementById('editor-container').style.display = 'block';
+        document.getElementById('content').innerText = scriptContent;
+        window.currentPassword = password; // Store for save
+      })
+      .catch(err => {
+        alert(err.message);
+      });
+  }
+ 
+  async function saveScript() {
+    const newContent = document.getElementById('content').innerText;
+    try {
+      const response = await fetch('/' + name, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ key: window.currentPassword, script: newContent })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        alert('Script updated successfully');
+      } else {
+        alert('Failed to update script: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error saving script: ' + error.message);
+    }
+  }
+</script>
+</body>
+</html>
